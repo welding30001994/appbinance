@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en" >
+<head>
+  <meta charset="UTF-8">
+  <title>PRECIOS SPOT DE BINANCE2</title>
+  
+
+</head>
+<body>
+<!-- partial:index.partial.html -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arbitraje Triangular Binance</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            width: 500px;
+        }
+        h1 {
+            text-align: center;
+        }
+        label {
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .resultado {
+            margin-top: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+        }
+        .pares {
+            margin-top: 20px;
+            font-size: 16px;
+            color: #555;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Arbitraje Triangular Binance</h1>
+        <label for="cripto">Elegir Criptomoneda</label>
+        <select id="cripto">
+            <!-- Aquí se cargarán las criptomonedas dinámicamente -->
+        </select>
+
+        <label for="inversion">Inversión (USDT)</label>
+        <input type="number" id="inversion" value="100" />
+
+        <button onclick="calcularArbitraje()">Calcular</button>
+
+        <div class="pares" id="pares"></div>
+        <div class="resultado" id="resultado"></div>
+    </div>
+
+    <script>
+        // Función para cargar todas las criptomonedas disponibles en Binance
+        async function cargarCriptomonedas() {
+            const url = "https://api.binance.com/api/v3/exchangeInfo";
+            const response = await fetch(url);
+            const data = await response.json();
+            const criptos = new Set();
+
+            // Extraer las criptomonedas únicas de todos los pares disponibles
+            data.symbols.forEach(symbol => {
+                if (symbol.status === "TRADING" && symbol.symbol.endsWith("USDT")) {
+                    const cripto = symbol.symbol.replace("USDT", "");
+                    criptos.add(cripto);
+                }
+            });
+
+            // Cargar las criptomonedas en el selector
+            const criptoSelect = document.getElementById('cripto');
+            criptos.forEach(cripto => {
+                const option = document.createElement("option");
+                option.value = cripto;
+                option.textContent = cripto;
+                criptoSelect.appendChild(option);
+            });
+        }
+
+        // Función para obtener los precios de las criptomonedas seleccionadas
+        async function obtenerPrecios() {
+            const cripto = document.getElementById('cripto').value;
+
+            const url = `https://api.binance.com/api/v3/ticker/price?symbol=${cripto}USDT`;
+            const urlBtc = `https://api.binance.com/api/v3/ticker/price?symbol=${cripto}BTC`;
+            const urlBtcUsdt = `https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT`;
+
+            // Obtener los valores de los precios
+            const [precioCriptoUsdt, precioCriptoBtc, precioBtcUsdt] = await Promise.all([
+                fetch(url).then(res => res.json()),
+                fetch(urlBtc).then(res => res.json()),
+                fetch(urlBtcUsdt).then(res => res.json())
+            ]);
+
+            return {
+                precioCriptoUsdt: parseFloat(precioCriptoUsdt.price),
+                precioCriptoBtc: parseFloat(precioCriptoBtc.price),
+                precioBtcUsdt: parseFloat(precioBtcUsdt.price)
+            };
+        }
+
+        // Función que calcula el arbitraje triangular
+        async function calcularArbitraje() {
+            const cripto = document.getElementById('cripto').value;
+            const inversion = parseFloat(document.getElementById('inversion').value);
+            const precios = await obtenerPrecios();
+
+            const { precioCriptoUsdt, precioCriptoBtc, precioBtcUsdt } = precios;
+
+            if (!precioCriptoUsdt || !precioCriptoBtc || !precioBtcUsdt) {
+                document.getElementById('resultado').innerText = "Hubo un error al obtener los precios de Binance.";
+                return;
+            }
+
+            // Realizar el cálculo de arbitraje triangular
+            let resultado = (inversion / precioCriptoUsdt) * precioCriptoBtc * precioBtcUsdt;
+
+            // Mostrar los pares y el resultado
+            document.getElementById('pares').innerHTML = `
+                <p><strong>Países de Cálculo:</strong></p>
+                <p><strong>${cripto}/USDT</strong>: ${precioCriptoUsdt} USDT</p>
+                <p><strong>${cripto}/BTC</strong>: ${precioCriptoBtc} BTC</p>
+                <p><strong>BTC/USDT</strong>: ${precioBtcUsdt} USDT</p>
+            `;
+
+            document.getElementById('resultado').innerText = `Resultado: ${resultado.toFixed(2)} USDT`;
+        }
+
+        // Cargar las criptomonedas al cargar la página
+        window.onload = cargarCriptomonedas;
+    </script>
+
+</body>
+</html>
+<!-- partial -->
+  <script  src="./script.js"></script>
+
+</body>
+</html>
